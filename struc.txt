@@ -1,0 +1,33 @@
+backend/
+  __init__.py
+  main.py
+  config.py
+  api/
+    health.py
+    objects.py
+    propagation.py
+    conjunctions.py
+    alerts.py
+  services/
+    spacetrack.py
+    ingestion.py
+  data/
+    database.py
+    repository.py
+    models.py
+  orbital/
+    tle.py
+    propagation.py
+    frames.py
+  conjunction/
+    screening.py
+    tca.py
+  risk/
+    features.py
+    engine.py
+  jobs/
+    refresh_catalog.py
+tests/
+data/
+  raw/
+  processed/
