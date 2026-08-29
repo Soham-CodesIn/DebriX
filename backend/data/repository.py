@@ -2,7 +2,7 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from backend.data.models import Conjunction, OrbitalRecord, SpaceObject
-
+from backend.data.models import PropagationState, RiskAssessment, RiskFeature, Alert
 
 def save_object(
     session: Session,
@@ -105,3 +105,84 @@ def save_conjunction(
     session.commit()
     session.refresh(conjunction)
     return conjunction
+
+def save_propagation_state(session, object_id, source_record_id, time_utc,
+                            x_km, y_km, z_km, vx_km_s, vy_km_s, vz_km_s,
+                            frame, propagation_status):
+    state = PropagationState(
+        object_id=object_id,
+        source_record_id=source_record_id,
+        time_utc=time_utc,
+        x_km=x_km, y_km=y_km, z_km=z_km,
+        vx_km_s=vx_km_s, vy_km_s=vy_km_s, vz_km_s=vz_km_s,
+        frame=frame,
+        propagation_status=propagation_status,
+    )
+    session.add(state)
+    session.commit()
+    return state
+
+
+def save_risk_assessment(session, conjunction_id, pc, pc_status, f_value,
+                          risk_level, confidence, methodology_version):
+    assessment = RiskAssessment(
+        conjunction_id=conjunction_id,
+        pc=pc,
+        pc_status=pc_status,
+        f_value=f_value,
+        risk_level=risk_level,
+        confidence=confidence,
+        methodology_version=methodology_version,
+    )
+    session.add(assessment)
+    session.commit()
+    return assessment
+
+
+def save_risk_feature(session, conjunction_id, feature_name, raw_value, normalized_value):
+    feature = RiskFeature(
+        conjunction_id=conjunction_id,
+        feature_name=feature_name,
+        raw_value=raw_value,
+        normalized_value=normalized_value,
+    )
+    session.add(feature)
+    session.commit()
+    return feature
+
+
+def save_alert(session, conjunction_id, severity, status="open"):
+    alert = Alert(
+        conjunction_id=conjunction_id,
+        severity=severity,
+        status=status,
+    )
+    session.add(alert)
+    session.commit()
+    return alert
+
+
+def get_latest_propagation_state(session, object_id):
+    return (
+        session.query(PropagationState)
+        .filter_by(object_id=object_id)
+        .order_by(PropagationState.time_utc.desc())
+        .first()
+    )
+
+
+def get_risk_assessment(session, conjunction_id):
+    return (
+        session.query(RiskAssessment)
+        .filter_by(conjunction_id=conjunction_id)
+        .order_by(RiskAssessment.created_at.desc())
+        .first()
+    )
+
+
+def get_risk_features(session, conjunction_id):
+    return session.query(RiskFeature).filter_by(conjunction_id=conjunction_id).all()
+
+
+def get_open_alerts(session):
+    return session.query(Alert).filter_by(status="open").all()
