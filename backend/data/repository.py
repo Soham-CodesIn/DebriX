@@ -92,16 +92,25 @@ def save_conjunction(
     miss_distance_km: float,
     relative_velocity_km_s: float,
 ) -> Conjunction:
-    conjunction = Conjunction(
-        conjunction_id=conjunction_id,
-        object_a=object_a,
-        object_b=object_b,
-        tca=tca,
-        miss_distance_km=miss_distance_km,
-        relative_velocity_km_s=relative_velocity_km_s,
-    )
+    conjunction = session.get(Conjunction, conjunction_id)
 
-    session.add(conjunction)
+    if conjunction is None:
+        conjunction = Conjunction(
+            conjunction_id=conjunction_id,
+            object_a=object_a,
+            object_b=object_b,
+            tca=tca,
+            miss_distance_km=miss_distance_km,
+            relative_velocity_km_s=relative_velocity_km_s,
+        )
+        session.add(conjunction)
+    else:
+        conjunction.object_a = object_a
+        conjunction.object_b = object_b
+        conjunction.tca = tca
+        conjunction.miss_distance_km = miss_distance_km
+        conjunction.relative_velocity_km_s = relative_velocity_km_s
+
     session.commit()
     session.refresh(conjunction)
     return conjunction
@@ -179,10 +188,25 @@ def get_risk_assessment(session, conjunction_id):
         .first()
     )
 
-
 def get_risk_features(session, conjunction_id):
     return session.query(RiskFeature).filter_by(conjunction_id=conjunction_id).all()
 
 
 def get_open_alerts(session):
     return session.query(Alert).filter_by(status="open").all()
+
+def get_object(session: Session, object_id: str) -> SpaceObject | None:
+    return session.get(SpaceObject, object_id)
+
+
+def get_all_objects(session: Session) -> list[SpaceObject]:
+    return list(session.scalars(select(SpaceObject)))
+
+
+def get_conjunction(session: Session, conjunction_id: str) -> Conjunction | None:
+    return session.get(Conjunction, conjunction_id)
+
+
+def get_all_conjunctions(session: Session) -> list[Conjunction]:
+    query = select(Conjunction).order_by(Conjunction.tca.desc())
+    return list(session.scalars(query))
