@@ -11,8 +11,8 @@ from backend.data.repository import (
 conjunction_bp = Blueprint("conjunction", __name__)
 
 
-def _serialize_conjunction(c):
-    return {
+def _serialize_conjunction(c, session=None):
+    payload = {
         "conjunction_id": c.conjunction_id,
         "object_a": c.object_a,
         "object_b": c.object_b,
@@ -21,32 +21,13 @@ def _serialize_conjunction(c):
         "relative_velocity_km_s": c.relative_velocity_km_s,
     }
 
+    # Include risk information when a database session is available.
+    if session is not None:
+        risk_assessment = get_risk_assessment(
+            session,
+            c.conjunction_id
+        )
 
-@conjunction_bp.get("/conjunctions")
-def list_conjunctions():
-    session = database.SessionLocal()
-    try:
-        conjunctions = get_all_conjunctions(session)
-        return jsonify([_serialize_conjunction(c) for c in conjunctions])
-    finally:
-        session.close()
-
-
-@conjunction_bp.get("/conjunctions/<conjunction_id>")
-def get_conjunction_detail(conjunction_id):
-    session = database.SessionLocal()
-    try:
-        conjunction = get_conjunction(session, conjunction_id)
-        if conjunction is None:
-            return jsonify({"error": "conjunction_not_found"}), 404
-
-        payload = _serialize_conjunction(conjunction)
-
-        # Risk data is optional -- may not exist yet if the risk engine
-        # hasn't processed this conjunction. Returning null rather than
-        # erroring keeps this endpoint usable throughout the pipeline.
-        risk_assessment = get_risk_assessment(session, conjunction_id)
-        payload["risk_assessment"] = None
         if risk_assessment:
             payload["risk_assessment"] = {
                 "pc": risk_assessment.pc,
@@ -56,8 +37,53 @@ def get_conjunction_detail(conjunction_id):
                 "confidence": risk_assessment.confidence,
                 "methodology_version": risk_assessment.methodology_version,
             }
+        else:
+            payload["risk_assessment"] = None
 
-        features = get_risk_features(session, conjunction_id)
+    return payload
+
+
+@conjunction_bp.get("/conjunctions")
+def list_conjunctions():
+    session = database.SessionLocal()
+
+    try:
+        conjunctions = get_all_conjunctions(session)
+
+        return jsonify([
+            _serialize_conjunction(c, session)
+            for c in conjunctions
+        ])
+
+    finally:
+        session.close()
+
+
+@conjunction_bp.get("/conjunctions/<conjunction_id>")
+def get_conjunction_detail(conjunction_id):
+    session = database.SessionLocal()
+
+    try:
+        conjunction = get_conjunction(
+            session,
+            conjunction_id
+        )
+
+        if conjunction is None:
+            return jsonify({
+                "error": "conjunction_not_found"
+            }), 404
+
+        payload = _serialize_conjunction(
+            conjunction,
+            session
+        )
+
+        features = get_risk_features(
+            session,
+            conjunction_id
+        )
+
         payload["risk_features"] = [
             {
                 "feature_name": f.feature_name,
@@ -68,5 +94,6 @@ def get_conjunction_detail(conjunction_id):
         ]
 
         return jsonify(payload)
+
     finally:
         session.close()

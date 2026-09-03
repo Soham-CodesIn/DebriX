@@ -1,0 +1,77 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap');
+
+
+.stApp {
+    background: transparent;
+    overflow: hidden;
+}
+
+h1 {
+    text-align: center;
+    font-family: "Orbitron", sans-serif !important;
+    font-size: 200px !important;
+    color: #ffffff !important;
+}
+h2 {
+    text-align: center;
+    font-family: "Orbitron", sans-serif !important;
+    font-size: 30px !important;
+    font-weight: 500 !important;
+    color: #e9fcff !important;
+}
+
+h3{
+    text-align: center;
+    font-family: "Orbitron", sans-serif !important;
+    font-size: 20px !important;
+    font-weight: 500 !important;
+    color:  #e9fcff !important;
+}
+
+div[data-testid="stHorizontalBlock"] {
+    justify-content: center !important;
+}
+div[data-testid="column"] {
+    display: flex;
+    flex-direction: column;
+    align-items: center !important;
+}
+div[data-testid="stMetric"] {
+    display: flex;
+    flex-direction: column;
+    align-items: center !important;
+    text-align: center !important;
+    width: 100%;
+}
+
+div[data-testid="stHorizontalBlock"]:has(button) {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 999;
+    background-color: #000000;
+    padding: 8px 20px;
+    gap: 5px !important;
+}
+
+/* Remove column spacing */
+div[data-testid="column"] {
+    padding: 10px !important;
+}
+
+/* Navigation buttons */
+div.stButton > button {
+    width: 250%;
+    height: 55px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 25px;
+    border: 10px;
+    font-family: "Orbitron", sans-serif !important;
+    font-size: 25px;
+    font-weight: 600;
+    padding: 30px;
+    opacity: 0.8;
+    background-color: #000000;
+}
